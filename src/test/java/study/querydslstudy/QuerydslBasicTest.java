@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydslstudy.entity.Member;
-import study.querydslstudy.entity.QMember;
 import study.querydslstudy.entity.Team;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static study.querydslstudy.entity.QMember.member;
 
 @SpringBootTest
 @Transactional
@@ -72,12 +72,10 @@ public class QuerydslBasicTest {
 		// BEFORE
 
 		// when
-		QMember m = new QMember("m");
-
 		Member findMember = queryFactory
-			.select(m)
-			.from(m)
-			.where(m.username.eq("member1"))
+			.select(member)
+			.from(member)
+			.where(member.username.eq("member1"))
 			.fetchOne();
 
 		// then
