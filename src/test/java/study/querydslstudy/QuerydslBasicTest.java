@@ -4,6 +4,8 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -310,7 +312,7 @@ public class QuerydslBasicTest {
 			System.out.println("Tuple: " + tuple);
 		}
 	}
-	
+
 	@DisplayName("세타 조인 - 회원의 이름이 팀 이름과 같은 회원 조회")
 	@Test
 	void join_on_no_relation() {
@@ -332,5 +334,45 @@ public class QuerydslBasicTest {
 		for(Tuple tuple : result) {
 			System.out.println("Tuple: " + tuple);
 		}
+	}
+
+	@PersistenceUnit
+	EntityManagerFactory emf;
+
+	@DisplayName("페지 조인 미적용")
+	@Test
+	void fetchJoinNo() {
+
+		em.flush();
+		em.clear();
+
+		// when
+		Member findMember = queryFactory
+			.selectFrom(member)
+			.where(member.username.eq("member1"))
+			.fetchOne();
+
+		// then
+		boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+		assertThat(loaded).isFalse();
+	}
+
+	@DisplayName("페지 조인 적용")
+	@Test
+	void fetchJoinUse() {
+
+		em.flush();
+		em.clear();
+
+		// when
+		Member findMember = queryFactory
+			.selectFrom(member)
+			.join(member.team, team).fetchJoin()
+			.where(member.username.eq("member1"))
+			.fetchOne();
+
+		// then
+		boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+		assertThat(loaded).isTrue();
 	}
 }
