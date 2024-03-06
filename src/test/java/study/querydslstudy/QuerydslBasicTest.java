@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydslstudy.entity.Member;
+import study.querydslstudy.entity.QMember;
 import study.querydslstudy.entity.Team;
 
 import java.util.List;
 
+import static com.querydsl.jpa.JPAExpressions.select;
 import static org.assertj.core.api.Assertions.assertThat;
 import static study.querydslstudy.entity.QMember.member;
 import static study.querydslstudy.entity.QTeam.team;
@@ -374,5 +376,90 @@ public class QuerydslBasicTest {
 		// then
 		boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
 		assertThat(loaded).isTrue();
+	}
+
+	@DisplayName("나이가 가장 많은 회원 조회")
+	@Test
+	void subQuery() {
+
+		QMember memberSub = new QMember("memberSub");
+
+		// when
+		List<Member> result = queryFactory
+			.selectFrom(member)
+			.where(member.age.eq(
+				select(memberSub.age.max())
+					.from(memberSub)
+			))
+			.fetch();
+
+		// then
+		assertThat(result)
+			.extracting("age")
+			.containsExactly(40);
+	}
+
+	@DisplayName("나이가 평균 이상인 회원 조회")
+	@Test
+	void subQueryGoe() {
+
+		QMember memberSub = new QMember("memberSub");
+
+		// when
+		List<Member> result = queryFactory
+			.selectFrom(member)
+			.where(member.age.goe(
+				select(memberSub.age.avg())
+					.from(memberSub)
+			))
+			.fetch();
+
+		// then
+		assertThat(result)
+			.extracting("age")
+			.containsExactly(30, 40);
+	}
+
+	@DisplayName("10살보다 많은 회원 조회")
+	@Test
+	void subQueryIn() {
+
+		QMember memberSub = new QMember("memberSub");
+
+		// when
+		List<Member> result = queryFactory
+			.selectFrom(member)
+			.where(member.age.in(
+				select(memberSub.age)
+					.from(memberSub)
+					.where(memberSub.age.gt(10))
+			))
+			.fetch();
+
+		// then
+		assertThat(result)
+			.extracting("age")
+			.containsExactly(20, 30, 40);
+	}
+
+	@DisplayName("회원 이름과 평균 나이를 같이 조회")
+	@Test
+	void selectSubQuery() {
+
+		QMember memberSub = new QMember("memberSub");
+
+		// when
+		List<Tuple> result = queryFactory
+			.select(member.username,
+				select(memberSub.age.avg())
+					.from(memberSub))
+			.from(member)
+			.fetch();
+
+
+		// then
+		for(Tuple tuple : result) {
+			System.out.println("Tuple: " + tuple);
+		}
 	}
 }
