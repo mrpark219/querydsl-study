@@ -169,4 +169,39 @@ public class QuerydslBasicTest {
 		assertThat(member6.getUsername()).isEqualTo("member6");
 		assertThat(memberNull.getUsername()).isNull();
 	}
+
+	@DisplayName("페이징1")
+	@Test
+	void paging1() {
+
+		// when
+		List<Member> result = queryFactory
+			.selectFrom(member)
+			.orderBy(member.username.desc())
+			.offset(1) // 0부터 시작
+			.limit(2)
+			.fetch();
+
+		// then
+		assertThat(result).hasSize(2);
+	}
+
+	@DisplayName("페이징2")
+	@Test
+	void paging2() {
+
+		// when
+		QueryResults<Member> queryResults = queryFactory
+			.selectFrom(member)
+			.orderBy(member.username.desc())
+			.offset(1) // 0부터 시작
+			.limit(2)
+			.fetchResults();
+
+		// then
+		assertThat(queryResults.getTotal()).isEqualTo(4);
+		assertThat(queryResults.getLimit()).isEqualTo(2);
+		assertThat(queryResults.getOffset()).isEqualTo(1);
+		assertThat(queryResults.getResults()).hasSize(2);
+	}
 }
